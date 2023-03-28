@@ -2,7 +2,7 @@
 
 set -e
 
-REGEX="let swiftFormatVersion = \"([0-9]+.[0-9]+.[0-9]+)\""
+REGEX="let swiftFormatVersion = \"([0-9]+.[0-9]+.[0-9]+-beta.[0-9]+)\""
 while IFS= read -r line; do
     if [[ $line =~ $REGEX ]]
     then
