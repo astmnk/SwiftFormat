@@ -1221,7 +1221,7 @@ class RedundancyTests: RulesTests {
         testFormatting(for: input, rule: FormatRules.redundantType, options: options)
     }
 
-    func testPreservesTypeWithIfExpressionInSwift5_7() {
+    func testPreservesTypeWithIfExpressionInSwift5_8() {
         let input = """
         let foo: Foo
         if condition {
@@ -1230,7 +1230,7 @@ class RedundancyTests: RulesTests {
             foo = Foo("bar")
         }
         """
-        let options = FormatOptions(redundantType: .inferred, swiftVersion: "5.7")
+        let options = FormatOptions(redundantType: .inferred, swiftVersion: "5.8")
         testFormatting(for: input, rule: FormatRules.redundantType, options: options)
     }
 
@@ -1242,7 +1242,7 @@ class RedundancyTests: RulesTests {
             FooSubclass("bar")
         }
         """
-        let options = FormatOptions(redundantType: .inferred, swiftVersion: "5.8")
+        let options = FormatOptions(redundantType: .inferred, swiftVersion: "5.9")
         testFormatting(for: input, rule: FormatRules.redundantType, options: options)
     }
 
@@ -1261,7 +1261,7 @@ class RedundancyTests: RulesTests {
             Foo("bar")
         }
         """
-        let options = FormatOptions(redundantType: .inferred, swiftVersion: "5.8")
+        let options = FormatOptions(redundantType: .inferred, swiftVersion: "5.9")
         testFormatting(for: input, output, rule: FormatRules.redundantType, options: options)
     }
 
@@ -1280,7 +1280,7 @@ class RedundancyTests: RulesTests {
             .init("bar")
         }
         """
-        let options = FormatOptions(redundantType: .explicit, swiftVersion: "5.8")
+        let options = FormatOptions(redundantType: .explicit, swiftVersion: "5.9")
         testFormatting(for: input, output, rule: FormatRules.redundantType, options: options)
     }
 
@@ -1317,7 +1317,7 @@ class RedundancyTests: RulesTests {
             Foo("quux")
         }
         """
-        let options = FormatOptions(redundantType: .inferred, swiftVersion: "5.8")
+        let options = FormatOptions(redundantType: .inferred, swiftVersion: "5.9")
         testFormatting(for: input, output, rule: FormatRules.redundantType, options: options)
     }
 
@@ -1354,7 +1354,7 @@ class RedundancyTests: RulesTests {
             .init("quux")
         }
         """
-        let options = FormatOptions(redundantType: .explicit, swiftVersion: "5.8")
+        let options = FormatOptions(redundantType: .explicit, swiftVersion: "5.9")
         testFormatting(for: input, output, rule: FormatRules.redundantType, options: options)
     }
 
@@ -1373,7 +1373,7 @@ class RedundancyTests: RulesTests {
             "bar"
         }
         """
-        let options = FormatOptions(redundantType: .inferred, swiftVersion: "5.8")
+        let options = FormatOptions(redundantType: .inferred, swiftVersion: "5.9")
         testFormatting(for: input, output, rule: FormatRules.redundantType, options: options)
     }
 
@@ -4401,6 +4401,27 @@ class RedundancyTests: RulesTests {
             cell.update(row: row)
             return cell
         }
+        """
+        XCTAssertNoThrow(try format(input, rules: [FormatRules.redundantSelf]))
+    }
+
+    func testRedundantSelfParsingBug5() {
+        let input = """
+        Button.primary(
+            title: "Title",
+            tapHandler: { [weak self] in
+                self?.dismissBlock? {
+                    // something
+                }
+            }
+        )
+        """
+        XCTAssertNoThrow(try format(input, rules: [FormatRules.redundantSelf]))
+    }
+
+    func testRedundantSelfParsingBug6() {
+        let input = """
+        if let foo = bar, foo.tracking[jsonDict: "something"] != nil {}
         """
         XCTAssertNoThrow(try format(input, rules: [FormatRules.redundantSelf]))
     }

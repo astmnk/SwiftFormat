@@ -777,8 +777,8 @@ public struct _FormatRules {
                 }
             }
 
-            // In Swift 5.8+ we need to handle if / switch expressions by checking each branch
-            if formatter.options.swiftVersion >= "5.8",
+            // In Swift 5.9+ (SE-0380) we need to handle if / switch expressions by checking each branch
+            if formatter.options.swiftVersion >= "5.9",
                let tokenAfterEquals = formatter.index(of: .nonSpaceOrCommentOrLinebreak, after: equalsIndex),
                let conditionalBranches = formatter.conditionalBranches(at: tokenAfterEquals),
                formatter.allRecursiveConditionalBranches(
@@ -3475,7 +3475,8 @@ public struct _FormatRules {
                             scopeAllowsImplicitSelfRebinding: scopeAllowsImplicitSelfRebinding
                         )
                         while let scope = formatter.currentScope(at: index) ?? formatter.token(at: index),
-                              [.startOfScope("["), .startOfScope("(")].contains(scope),
+                              case let .startOfScope(name) = scope,
+                              ["[", "("].contains(name) || scope.isStringDelimiter,
                               let endIndex = formatter.endOfScope(at: index)
                         {
                             // TODO: find less hacky workaround
@@ -7128,12 +7129,19 @@ public struct _FormatRules {
                     continue
                 }
 
-                // If the generic type occurs multiple times in the parameter list,
-                // it isn't eligible to be removed. For example `(T, T) where T: Foo`
-                // requires the two params to be the same underlying type, but
-                // `(some Foo, some Foo)` does not.
+                // We can only remove the generic type if it appears exactly once in the parameter list.
+                //  - If the generic type occurs _multiple_ times in the parameter list,
+                //    it isn't eligible to be removed. For example `(T, T) where T: Foo`
+                //    requires the two params to be the same underlying type, but
+                //    `(some Foo, some Foo)` does not.
+                //  - If the generic type occurs _zero_ times in the parameter list
+                //    then removing the generic parameter would also remove any
+                //    potentially-important constraints (for example, if the type isn't
+                //    used in the function parameters / body and is only constrained relative
+                //    to generic types in the parent type scope). If this generic parameter
+                //    is truly unused and redundant then the compiler would emit an error.
                 let countInParameterList = parameterListTokens.filter { $0.string == genericType.name }.count
-                if countInParameterList > 1 {
+                if countInParameterList != 1 {
                     genericType.eligibleToRemove = false
                     continue
                 }
@@ -7545,8 +7553,8 @@ public struct _FormatRules {
     public let conditionalAssignment = FormatRule(
         help: "Assign properties using if / switch expressions."
     ) { formatter in
-        // If / switch expressions were added in Swift 5.8 (SE-0380)
-        guard formatter.options.swiftVersion >= "5.8" else {
+        // If / switch expressions were added in Swift 5.9 (SE-0380)
+        guard formatter.options.swiftVersion >= "5.9" else {
             return
         }
 
